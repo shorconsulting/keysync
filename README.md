@@ -2,7 +2,7 @@
 
 **Every account gets its own SSH key. Every server trusts every account. Bitwarden keeps the list.**
 
-![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue) ![macOS | Windows | Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey) ![Bitwarden](https://img.shields.io/badge/vault-Bitwarden-175DDC) ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-orange)
+MIT license · Python 3.8+ · macOS, Windows and Linux · Bitwarden · Claude Code plugin
 
 New laptop, new user account, new contractor? Logging into your servers shouldn't mean hunting for an old key, copying a private key between machines, or clicking through "authenticity of host can't be established" on every server. keysync does it the other way round. Each account makes its own key, publishes only the *public* half to a folder in your Bitwarden vault, and one sync puts every active key on every server.
 
