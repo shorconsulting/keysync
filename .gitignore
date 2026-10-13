@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .DS_Store
+*-test-results.txt
 # Never commit keys, vault data or local config
 *.pem
 *_ed25519
