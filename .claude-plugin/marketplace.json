@@ -1,0 +1,15 @@
+{
+  "name": "keysync",
+  "description": "keysync: one SSH key per account, one shared list in Bitwarden.",
+  "owner": {
+    "name": "David Shor",
+    "url": "https://github.com/shorconsulting"
+  },
+  "plugins": [
+    {
+      "name": "keysync",
+      "source": "./",
+      "description": "One SSH key per account, one shared list in Bitwarden, every server trusts every active key."
+    }
+  ]
+}

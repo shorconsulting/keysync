@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""Stand-in for the Bitwarden CLI. One JSON file ($BW_STUB_DB) acts as the shared vault."""
+import base64, json, os, sys, uuid
+
+db_path = os.environ["BW_STUB_DB"]
+db = json.load(open(db_path)) if os.path.exists(db_path) else {"folders": [], "items": []}
+args = [a for a in sys.argv[1:] if a not in ("--nointeraction", "--raw")]
+SESSION = "stub-session"
+with open(db_path + ".calls", "a") as f:
+    f.write(" ".join(args[:3]) + "\n")
+
+
+def save():
+    json.dump(db, open(db_path, "w"), indent=1)
+
+
+def need_unlock():
+    if os.environ.get("BW_SESSION") != SESSION:
+        print("Vault is locked.", file=sys.stderr)
+        sys.exit(1)
+
+
+def dec(s):
+    return json.loads(base64.b64decode(s))
+
+
+cmd = args[0]
+if cmd == "status":
+    print(json.dumps({"status": "unlocked" if os.environ.get("BW_SESSION") == SESSION else "locked",
+                      "userEmail": "me@example.com"}))
+elif cmd == "unlock":
+    env = args[args.index("--passwordenv") + 1]
+    if os.environ.get(env) != "correct horse":
+        print("Invalid master password.", file=sys.stderr); sys.exit(1)
+    print(SESSION)
+elif cmd in ("sync", "lock", "login"):
+    pass
+elif cmd == "list":
+    need_unlock()
+    if args[1] == "folders":
+        term = args[args.index("--search") + 1] if "--search" in args else ""
+        print(json.dumps([f for f in db["folders"] if term.lower() in f["name"].lower()]))
+    else:
+        fid = args[args.index("--folderid") + 1]
+        print(json.dumps([i for i in db["items"] if i.get("folderId") == fid]))
+elif cmd == "create":
+    need_unlock()
+    obj = dict(dec(args[2]), id=str(uuid.uuid4()), object=args[1])
+    db["folders" if args[1] == "folder" else "items"].append(obj); save(); print(json.dumps(obj))
+elif cmd == "edit":
+    need_unlock()
+    obj = dec(args[3]); obj["id"] = args[2]
+    db["items"] = [obj if i["id"] == args[2] else i for i in db["items"]]; save(); print(json.dumps(obj))
+elif cmd == "delete":
+    need_unlock()
+    db["items"] = [i for i in db["items"] if i["id"] != args[2]]; save()
+else:
+    print("unsupported", args, file=sys.stderr); sys.exit(2)

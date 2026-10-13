@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.DS_Store
+# Never commit keys, vault data or local config
+*.pem
+*_ed25519
+*_rsa
+config.json
+session*

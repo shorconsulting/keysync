@@ -1,0 +1,24 @@
+{
+  "name": "keysync",
+  "displayName": "keysync",
+  "version": "1.0.0",
+  "description": "One SSH key per account, one shared list in Bitwarden. Every computer account gets its own traceable key, every server trusts every active key, new accounts get server access on day one, and one command revokes a lost laptop everywhere.",
+  "author": {
+    "name": "David Shor",
+    "url": "https://github.com/shorconsulting"
+  },
+  "homepage": "https://github.com/shorconsulting/keysync",
+  "repository": "https://github.com/shorconsulting/keysync",
+  "documentationUrl": "https://github.com/shorconsulting/keysync#readme",
+  "supportUrl": "https://github.com/shorconsulting/keysync/issues",
+  "license": "MIT",
+  "keywords": [
+    "ssh",
+    "ssh-keys",
+    "bitwarden",
+    "authorized-keys",
+    "devops",
+    "security",
+    "cross-platform"
+  ]
+}
