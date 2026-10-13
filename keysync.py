@@ -98,6 +98,33 @@ def ssh_path(path):
     return f'"{s}"' if " " in s else s
 
 
+_USER_SID = None
+
+
+def windows_user_sid():
+    """This Windows user's SID (e.g. S-1-5-21-…), which names the account whatever the system's language."""
+    global _USER_SID
+    if _USER_SID is None:
+        r = subprocess.run(["whoami", "/user", "/fo", "csv", "/nh"], capture_output=True, text=True,
+                           creationflags=0x08000000)  # CREATE_NO_WINDOW: no console flash under pythonw
+        sid = r.stdout.strip().rsplit(",", 1)[-1].strip().strip('"') if r.returncode == 0 else ""
+        _USER_SID = sid if sid.startswith("S-1-") else ""
+    return _USER_SID
+
+
+def restrict_to_owner(path):
+    """Windows: OpenSSH refuses a config or key file that anyone besides this user, SYSTEM and
+    Administrators can access, such as an OWNER RIGHTS entry inherited from the folder. chmod can't
+    express that on Windows, so replace the inherited entries with exactly those three."""
+    if not IS_WINDOWS:
+        return
+    sid = windows_user_sid()
+    if not sid:
+        return
+    subprocess.run(["icacls", str(path), "/inheritance:r", "/grant:r", f"*{sid}:F", "*S-1-5-18:F", "*S-1-5-32-544:F"],
+                   capture_output=True, text=True, creationflags=0x08000000)
+
+
 def run_powershell(script, env_extra=None):
     env = os.environ.copy()
     env.update(env_extra or {})
@@ -149,7 +176,20 @@ class Fail(SystemExit):
 
 
 def interactive_tty():
-    return sys.stdin is not None and sys.stdin.isatty()
+    if sys.stdin is None or not sys.stdin.isatty():
+        return False
+    if IS_WINDOWS:
+        # The NUL device (stdin from Task Scheduler, a pipe or DEVNULL) reports isatty() True on Windows,
+        # and getpass would then wait on a prompt nobody sees. Only a real console has a console mode.
+        try:
+            import ctypes
+            import msvcrt
+            mode = ctypes.c_uint32()
+            handle = msvcrt.get_osfhandle(sys.stdin.fileno())
+            return bool(ctypes.windll.kernel32.GetConsoleMode(ctypes.c_void_p(handle), ctypes.byref(mode)))
+        except (AttributeError, OSError, ValueError):
+            return False
+    return True
 
 
 def die(msg):
@@ -193,6 +233,7 @@ def write_private(path: Path, text: str, mode=0o600):
     with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)
     os.chmod(tmp, mode)
+    restrict_to_owner(tmp)
     os.replace(tmp, path)
 
 
@@ -557,6 +598,7 @@ def ensure_local_key(cfg, passphrase=False):
         cmd += ["-N", ""]
     if subprocess.run(cmd).returncode != 0:
         die("ssh-keygen failed")
+    restrict_to_owner(kp)
     if passphrase and IS_MAC:
         subprocess.run(["ssh-add", "--apple-use-keychain", str(kp)])
     return pub.read_text().strip(), True
@@ -1742,7 +1784,7 @@ class LocalPage:
                 raise ValueError("another action is still running")
             job = {"id": int(time.time() * 1000), "argv": argv, "running": True, "output": "", "code": None}
             self.job = job
-        env = dict(os.environ, GIT_TERMINAL_PROMPT="0", PYTHONUNBUFFERED="1")
+        env = dict(os.environ, GIT_TERMINAL_PROMPT="0", PYTHONUNBUFFERED="1", PYTHONIOENCODING="utf-8")
         env.setdefault("GIT_SSH_COMMAND", "ssh -o BatchMode=yes")
         # own process group: Ctrl+C or closing the page never interrupts a sync halfway,
         # and with no terminal attached nothing can sit waiting for a password prompt
@@ -1927,7 +1969,18 @@ def cmd_ui(args):
               Path(__file__).resolve(), port=args.port).serve(open_browser=not args.no_browser)
 
 
+def safe_console():
+    """Windows sends piped or redirected output through an old code page (e.g. cp1252) that can't
+    encode characters like "…" or "─". Show a "?" instead of crashing halfway through a run."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def main(argv=None):
+    safe_console()
     p = argparse.ArgumentParser(prog="keysync", description="One SSH key per account, shared through Bitwarden.")
     p.add_argument("--version", action="version", version=VERSION)
     p.add_argument("--quiet", action="store_true")
