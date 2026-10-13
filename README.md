@@ -28,6 +28,8 @@ Inside Claude Code:
 /plugin install keysync --marketplace shorconsulting/keysync
 ```
 
+On an older Claude Code, add the marketplace first: `/plugin marketplace add shorconsulting/keysync`, then `/plugin install keysync@keysync`.
+
 Then ask Claude things like *"add my server web1 at deploy@10.0.0.5"*, *"which servers can this account reach?"* or *"who logged in with this key?"*. Claude never types your Bitwarden password. The one-time setup runs in your own terminal, as shown below.
 
 ### One-time setup (each account, each computer)
@@ -124,6 +126,16 @@ You can also edit everything directly in Bitwarden: the `keysync server: …` lo
 - **"The server closed the connection before login."** Servers running OpenSSH 9.8 or later briefly block an address after several failed logins, which can happen right after a brand-new account tries its key. Wait a few minutes and sync again.
 - **Values from the vault are checked.** Server names, hosts, users, jump hosts, host keys and public keys must be plain values before they reach `~/.ssh/config`, an ssh command line or `authorized_keys`. An entry that could carry an ssh option (a `ProxyCommand`, say, or a key with a `command=` prefix) is skipped with a warning, so someone who can edit the vault folder still can't run commands on your computers.
 - **Recovery.** A server's previous `authorized_keys` is kept as `authorized_keys.keysync-bak`. If a rewrite would lock out the account doing the sync, keysync restores the previous file automatically.
+
+## Privacy and data
+
+keysync has no telemetry and no server of its own. It talks only to:
+
+- **Your Bitwarden vault**, through the official Bitwarden CLI (`bw`) signed in as you: it reads and writes items in one folder (default `keysync`) holding public keys, server details and optional bootstrap passwords.
+- **The SSH servers you list**, through your system's own `ssh`, to update the keysync block in `authorized_keys`.
+- **Your own computer**: `~/.ssh/keysync_config`, `~/.ssh/keysync_known_hosts`, one `Include` line in `~/.ssh/config`, the key it creates, and its state in `~/.keysync/`. The settings page listens on 127.0.0.1 only, behind a random per-run token.
+
+Private keys never leave the account that made them, and stored passwords are handed to `ssh` through a private helper without being written to disk. The source is one readable Python file, `keysync.py`.
 
 ## Tests
 
