@@ -137,6 +137,19 @@ keysync has no telemetry and no server of its own. It talks only to:
 
 Private keys never leave the account that made them, and stored passwords are handed to `ssh` through a private helper without being written to disk. The source is one readable Python file, `keysync.py`.
 
+### Credentials it reads from your computer, and why
+
+keysync's job is to manage SSH access from your own accounts, so it has to use credentials that already exist on your computer. It reads only these, and passes each only to the program shown:
+
+| Credential | Where it comes from | Used by |
+|---|---|---|
+| The Bitwarden **session token** made by `keysync unlock` (never your master password) | `BW_SESSION` if you set it; else the macOS Keychain item "keysync Bitwarden session", the DPAPI-encrypted `~/.keysync/bw_session.dpapi` on Windows, or the mode-600 `~/.keysync/bw_session` on Linux | the `bw` CLI, so the daily sync can run unattended. `keysync lock` deletes it |
+| This account's **keysync SSH key**, `~/.ssh/keysync_ed25519` | created by keysync on this account | your `ssh`, to log in to your servers |
+| Your **existing SSH keys** (`~/.ssh/id_ed25519`, `id_ecdsa`, `id_rsa`, or the SSH agent) | already on this account | your `ssh`, only to reach a server the first time, before the keysync key is on it |
+| A server's optional **bootstrap password** | the server's item in your Bitwarden folder | your `ssh`, through a private helper, never written to disk |
+
+These can't be Claude Code `userConfig` values. The session token changes every time you unlock, and the master password is typed only into your own terminal. Claude never sees it. Nothing above is sent anywhere except to your own `bw` CLI and your own servers.
+
 ## Tests
 
 ```bash
