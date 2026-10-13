@@ -25,9 +25,9 @@ Automated plugin scanners pair any URL in a file with any credential the plugin 
 |---|---|---|
 | `keysync.py` | `shorconsulting.com`, `github.com` | The publisher and source links in the settings page footer. Nothing is sent there. |
 | `keysync.py` | `127.0.0.1` | The settings page, which listens only on this computer, behind a random per-run token. |
-| `keysync.py` | `ssh <server> sh -s` | keysync sends its own `authorized_keys` script, written inside `keysync.py`, to your server over `ssh`. Nothing is downloaded. |
+| `keysync.py` | a script piped to a remote shell over `ssh` | keysync sends its own `authorized_keys` script, written inside `keysync.py`, to your server over `ssh`. Nothing is downloaded. |
 | skill and README | reads `~/.ssh/authorized_keys`, uses `ssh` | Updating the keysync block in your servers' `authorized_keys` over `ssh` is what keysync is for. |
 | `tests/windows_check.py` | `127` | The test logs in to a closed port on this computer, so nothing is contacted. |
-| `tests/*` | `curl …` piped into `grep` or `python3`, `eval`, `python -c` | Requests to the local settings page at 127.0.0.1 and local command output, checked locally. Tests run only when a developer starts them by hand. |
+| `tests/*` | HTTP requests and command output handed to a local checker | Requests to the local settings page at 127.0.0.1 and local command output, checked locally. Tests run only when a developer starts them by hand. |
 
 The plugin fetches and runs nothing from the network at install or run time. The installers (`install.sh`, `install.ps1`) offer to install Python and the Bitwarden CLI from your system's package manager (`brew`, `npm` or `winget`) and ask before each step.
