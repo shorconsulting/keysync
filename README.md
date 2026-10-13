@@ -129,7 +129,7 @@ You can also edit everything directly in Bitwarden: the `keysync server: …` lo
 
 ## Privacy and data
 
-keysync has no telemetry and no server of its own. It talks only to:
+The full [Privacy](PRIVACY.md) policy is in `PRIVACY.md`. In short: keysync has no telemetry and no server of its own. It talks only to:
 
 - **Your Bitwarden vault**, through the official Bitwarden CLI (`bw`) signed in as you: it reads and writes items in one folder (default `keysync`) holding public keys, server details and optional bootstrap passwords.
 - **The SSH servers you list**, through your system's own `ssh`, to update the keysync block in `authorized_keys`.

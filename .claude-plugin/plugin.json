@@ -11,6 +11,7 @@
   "repository": "https://github.com/shorconsulting/keysync",
   "documentationUrl": "https://github.com/shorconsulting/keysync#readme",
   "supportUrl": "https://github.com/shorconsulting/keysync/issues",
+  "privacyPolicyUrl": "https://github.com/shorconsulting/keysync/blob/main/PRIVACY.md",
   "license": "MIT",
   "keywords": [
     "ssh",
